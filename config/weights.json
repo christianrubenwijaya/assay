@@ -1,0 +1,15 @@
+{
+  "_note": "Bobot skor. Komponen varians-rendah (spec_seed) dominan demi validitas rating (Bible §6). Komponen yang tidak jalan di-renormalisasi otomatis.",
+  "tracks": {
+    "casual":      { "harness": 1.0, "panel": 0.0 },
+    "competitive": { "harness": 0.7, "panel": 0.3 },
+    "final":       { "harness": 0.6, "panel": 0.25, "human": 0.15 }
+  },
+  "harness_components": {
+    "build": 0.20,
+    "smoke": 0.15,
+    "spec_seed": 0.45,
+    "perf": 0.10,
+    "a11y": 0.10
+  }
+}

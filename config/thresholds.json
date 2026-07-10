@@ -1,0 +1,8 @@
+{
+  "load_seconds": 5,
+  "console_fatal_max": 0,
+  "lighthouse_perf_min": 0.60,
+  "axe_serious_max": 0,
+  "similarity_pct_max": 30,
+  "drift_avg_max": 3
+}

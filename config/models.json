@@ -1,0 +1,14 @@
+{
+  "_decision": "Neb pick 2026-07-10 — best price/value/risk, NO Claude bias. Panel = 3 family beda biar zero single-vendor bias. Harga indikatif; final-kan di W6 setelah tau kredit mana yg approve.",
+  "casual_single": { "provider": "google", "model": "gemini-2.5-flash-lite", "why": "termurah + cepat + cukup buat sanity/anti-jiplak casual" },
+  "competitive_panel": [
+    { "provider": "google", "model": "gemini-2.5-flash-lite", "why": "price/value terbaik" },
+    { "provider": "openai", "model": "gpt-4o-mini",           "why": "murah, lineage beda, reliable" },
+    { "provider": "groq",   "model": "llama-3.3-70b-versatile","why": "open-weight via Groq = ~nol biaya + family beda, hapus dependensi 1 vendor" }
+  ],
+  "rules": {
+    "pin_snapshots": true,
+    "never_use_latest": true,
+    "revisit": "W6 — kalau kredit Anthropic/OpenAI/Google approve, boleh swap ke yg gratis-via-kredit; Claude Haiku sengaja TIDAK dipilih (termahal dari 3 besar, value gak sepadan buat judging brief game)"
+  }
+}
