@@ -1,0 +1,30 @@
+{
+    "_note": "Pool seed per brief. Harness/host pilih 1 entri acak per peserta per Sortie. Bentuk tiap seed harus match yang dibaca briefs/<id>.ts.",
+    "01-endless-runner": [
+          { "theme": "teko terbang" },
+          { "theme": "kucing ninja" },
+          { "theme": "durian meledak" },
+          { "theme": "ojek terbang" },
+          { "theme": "hantu kantor" },
+          { "theme": "roket ketupat" }
+    ],
+    "02-platformer-gravity-flip": [
+          { "n": 7, "protagonist": "batu ajaib", "palette": "neon" },
+          { "n": 9, "protagonist": "kucing luar angkasa", "palette": "pastel" },
+          { "n": 11, "protagonist": "robot sarung", "palette": "monokrom" },
+          { "n": 13, "protagonist": "naga kertas", "palette": "sunset" },
+          { "n": 8, "protagonist": "ksatria mie", "palette": "cyberpunk" }
+    ],
+    "03-memory-reshuffle": [
+          { "x": 4, "pairs": 6, "theme": "buah tropis" },
+          { "x": 5, "pairs": 8, "theme": "hewan nusantara" },
+          { "x": 3, "pairs": 5, "theme": "jajanan pasar" },
+          { "x": 6, "pairs": 8, "theme": "rasi bintang" }
+    ],
+    "10-idle-clicker-prestige": [
+          { "costCurve": 1.15, "resourceName": "kopi sachet" },
+          { "costCurve": 1.25, "resourceName": "kerupuk" },
+          { "costCurve": 1.1, "resourceName": "token listrik" },
+          { "costCurve": 1.3, "resourceName": "bensin eceran" }
+    ]
+}
