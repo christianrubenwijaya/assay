@@ -7,8 +7,9 @@ const MIME: Record<string,string> = { ".html":"text/html", ".js":"text/javascrip
 
 export async function startServer(root: string): Promise<{ url: string; close: () => void }> {
   const server = http.createServer((req, res) => {
-    let p = normalize(decodeURIComponent((req.url || "/").split("?")[0]));
-    if (p.endsWith("/")) p += "index.html";
+    let raw = decodeURIComponent((req.url || "/").split("?")[0]);
+    if (raw.endsWith("/")) raw += "index.html";
+    const p = normalize(raw);
     const f = join(root, p);
     if (!f.startsWith(root) || !existsSync(f) || !statSync(f).isFile()) { res.statusCode = 404; return res.end("404"); }
     res.setHeader("Content-Type", MIME[extname(f)] || "application/octet-stream");

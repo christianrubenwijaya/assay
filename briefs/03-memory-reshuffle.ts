@@ -38,12 +38,13 @@ const brief: Brief = {
                                    return !!el && el.offsetParent !== null;
                        });
                        return { pass: ok, detail: `win_visible=${ok}` }; } },
-      { id: "seed-theme", label: "Tema ikon dari seed hadir di DOM", seed: true,
+      { id: "seed-theme", label: "Tema ikon dari seed hadir di visible text (bukan script/comment)", seed: true,
              run: async (p, seed) => {
                        const theme = String(seed?.theme ?? "").toLowerCase();
-                       const body = (await p.evaluate(() => document.body.innerText + " " + document.body.outerHTML)).toLowerCase();
+                       // HANYA innerText -- outerHTML ikut nyerap komentar <script> yg gak dirender.
+                       const body = (await p.evaluate(() => document.body.innerText)).toLowerCase();
                        const pass = theme.length > 0 && body.includes(theme);
-                       return { pass, detail: `cari '${theme}' di DOM -> ${pass}` }; } },
+                       return { pass, detail: `cari '${theme}' di visible text -> ${pass}` }; } },
         ],
 };
 export default brief;

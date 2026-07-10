@@ -2,7 +2,7 @@ import { chromium } from "playwright";
 import { pathToFileURL } from "node:url";
 import { join, resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { readFileSync, rmSync } from "node:fs";
+import { readFileSync, rmSync, mkdirSync, cpSync } from "node:fs";
 import { sh, log, type JudgeResult, type CheckResult, type Track, type Division } from "./util.js";
 import { readManifest } from "./gates/manifest.js";
 import { buildSubmission } from "./gates/build.js";
@@ -29,10 +29,11 @@ export async function judgeSubmission(o: JudgeOpts): Promise<JudgeResult> {
     score: 0, components: {}, checks: [], flags, build_ok: false, smoke_ok: false, load_ms: 0,
   };
 
-  // isolate: copy submission to a clean work dir
+  // isolate: copy submission to a clean work dir (cross-platform, no shelling to Unix cp/rm/mkdir)
   const work = join(o.outDir, "_work", o.participant);
-  sh(`rm -rf "${work}"`, ROOT);
-  sh(`mkdir -p "${work}" && cp -r "${o.submissionDir}/." "${work}/"`, ROOT);
+  rmSync(work, { recursive: true, force: true });
+  mkdirSync(work, { recursive: true });
+  cpSync(o.submissionDir, work, { recursive: true });
 
   // GATE: timestamp (skipped local — needs GitHub API in CI)
   if (o.t0 && o.repoCreatedAt && new Date(o.repoCreatedAt) < new Date(o.t0)) {

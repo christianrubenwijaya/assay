@@ -29,12 +29,14 @@ const brief: Brief = {
                                    return !!el && el.offsetParent !== null;
                        });
                        return { pass: ok, detail: `win_visible=${ok}` }; } },
-      { id: "seed", label: "Nama protagonis dari seed hadir di DOM", seed: true,
+      { id: "seed", label: "Nama protagonis dari seed hadir di visible text (bukan script/comment)", seed: true,
              run: async (p, seed) => {
                        const name = String(seed?.protagonist ?? "").toLowerCase();
-                       const body = (await p.evaluate(() => document.body.innerText + " " + document.body.outerHTML)).toLowerCase();
+                       // HANYA innerText -- outerHTML ikut nyerap komentar <script> yg gak dirender,
+                       // bisa di-fake submission prebuilt cukup nulis seed di komentar kode.
+                       const body = (await p.evaluate(() => document.body.innerText)).toLowerCase();
                        const pass = name.length > 0 && body.includes(name);
-                       return { pass, detail: `cari '${name}' di DOM -> ${pass}` }; } },
+                       return { pass, detail: `cari '${name}' di visible text -> ${pass}` }; } },
         ],
 };
 export default brief;

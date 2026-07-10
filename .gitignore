@@ -3,3 +3,9 @@ _work/
 out/
 *.log
 .DS_Store
+
+# fixture repos buat tests/selftest.ts -- ini repo GitHub terpisah (punya .git sendiri),
+# jangan pernah ke-commit sebagai embedded repo di sini
+assay-sample-good/
+assay-dummy-jelek/
+assay-dummy-curang/
