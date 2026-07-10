@@ -1,5 +1,6 @@
 {
-  "_note": "Bobot skor. Komponen varians-rendah (spec_seed) dominan demi validitas rating (Bible §6). Komponen yang tidak jalan di-renormalisasi otomatis.",
+  "_note": "Bobot skor. Komponen varians-rendah (spec_seed) dominan demi validitas rating (Bible section 6). aggregate() renormalize otomatis di 2 level -- harness (kalau ada sub-komponen belum jalan) dan track (kalau panel/human belum jalan) -- lihat src/score/aggregate.ts.",
+  "_perf_a11y_status": "perf & a11y sengaja di-nol-in (0.0), BUKAN dihapus. Belum ada implementasi (0 match utk lighthouse/axe di src/, cek README Known gaps). Bobotnya (0.10+0.10) dipindah ke spec_seed karena itu komponen anti-cheat varians-rendah yang paling kritis buat validitas rating. Aktifkan lagi manual pas Lighthouse/axe beneran dibangun -- jangan biarin weight nol ini kebawa diam-diam ke competitive/final track.",
   "tracks": {
     "casual":      { "harness": 1.0, "panel": 0.0 },
     "competitive": { "harness": 0.7, "panel": 0.3 },
@@ -8,8 +9,8 @@
   "harness_components": {
     "build": 0.20,
     "smoke": 0.15,
-    "spec_seed": 0.45,
-    "perf": 0.10,
-    "a11y": 0.10
+    "spec_seed": 0.65,
+    "perf": 0.0,
+    "a11y": 0.0
   }
 }
