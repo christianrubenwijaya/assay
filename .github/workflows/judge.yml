@@ -1,0 +1,32 @@
+name: ASSAY Judge
+on:
+  workflow_dispatch:
+    inputs:
+      submission:  { description: "URL repo peserta (git)", required: true }
+      participant: { description: "ID peserta", required: true }
+      brief:       { description: "Brief ID", required: true, default: "01-endless-runner" }
+      seed:        { description: "Seed JSON", required: true, default: '{"theme":"teko terbang"}' }
+      division:    { description: "standard|open", required: true, default: "open" }
+      track:       { description: "casual|competitive", required: true, default: "casual" }
+jobs:
+  judge:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: "20" }
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Clone submission (public repo)
+        run: git clone --depth 1 "${{ inputs.submission }}" _sub
+      - name: Judge
+        env:
+          LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        run: >
+          npm run judge --
+          --submission _sub --participant "${{ inputs.participant }}"
+          --brief "${{ inputs.brief }}" --seed '${{ inputs.seed }}'
+          --division "${{ inputs.division }}" --track "${{ inputs.track }}" --out out
+      - uses: actions/upload-artifact@v4
+        with: { name: "assay-result-${{ inputs.participant }}", path: out/ }
