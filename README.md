@@ -75,8 +75,13 @@ npm run elo-apply -- --pairs out/round_pairs.json --results out/_tournament/resu
 `scripts/run_tournament.ts` -- trigger + poll N judge run lewat GitHub Actions REST API
 (gantiin klik manual `workflow_dispatch` satu-satu), tarik `score.json` dari tiap
 artifact, cetak leaderboard. Butuh `GH_TOKEN` env var (PAT scope `repo`+`workflow`).
-**BELUM PERNAH DITES LAWAN GITHUB BENERAN** (sandbox yang nulis ini nggak punya token) --
-coba dulu lawan 2-3 peserta dummy sebelum dipercaya buat 50 peserta beneran.
+**VERIFIED 2026-07-11** — dites beneran lawan GitHub Actions (bukan cuma direview): 3
+fixture dummy (`good`/`jelek`/`curang`) di-dispatch, di-poll, hasil ditarik dari artifact,
+leaderboard tercetak benar (`good=100 > jelek=78 > curang=35(SEED_MISMATCH, not ratable)`).
+Nemu 1 bug nyata pas tes ini: job `notify` di `judge.yml` ternyata truncated mid-script
+(lihat commit `de01ebd`) -- udah difix + reverifikasi, konklusi run sekarang `success`.
+Rollout ke event beneran: lihat "Live event ops -- wave rollout" di bawah buat strategi
+batch tanpa perlu upgrade GitHub Pro.
 
 `src/elo/*` -- rating competitive track, HARNESS-ONLY (nol human judge). Detail formula,
 K-factor, draw margin, forfeit rule ada di "Rating (ELO) -- competitive track" di bawah.
@@ -187,6 +192,22 @@ dari nol tiap kali. Fix: tambah `actions/cache` step keyed di `package-lock.json
 `node_modules` + `~/.cache/ms-playwright`. Belum urgent (2000 menit/bulan kuota Free masih
 jauh dari abis buat 50 run sekali event), tapi kepake begitu frequency event naik.
 
+
+**Keputusan Ben (2026-07-11): TIDAK upgrade GitHub Pro.** Sebagai gantinya, event beneran
+dijalanin dalam WAVE -- 20 peserta per batch (pas di bawah limit 20 concurrent job Free
+tier), batch berikutnya di hari lain (atau jeda beberapa jam), bukan 50 sekaligus.
+Gak butuh perubahan kode: `scripts/run_tournament.ts` udah nerima `--roster` sebagai file
+terpisah -- tinggal split `roster.json` jadi `roster_wave1.json` (peserta 1-20),
+`roster_wave2.json` (21-40), dst, dan jalanin script itu sekali per wave:
+```
+npm run tournament -- --owner christianrubenwijaya --repo assay --roster out/roster_wave1.json \\
+  --seeds out/seeds.json --brief 01-endless-runner --division open --track casual
+```
+Leaderboard per-wave ditulis ke `out/_tournament/results.json` -- gabungin manual (atau tulis
+script kecil concat) kalau butuh 1 leaderboard gabungan lintas wave. Trade-off: leaderboard
+penuh keisi bertahap (per wave), bukan real-time semua peserta -- dianggap oke buat Season 0
+karena bukan itu prioritas dibanding zero-cost tambahan.
+
 ## Rating (ELO) -- competitive track
 
 `src/elo/*` + `config/elo.json`. **Harness-only, NOL human judge** -- murni skor
@@ -222,10 +243,13 @@ track `final` di `weights.json`).
 - **n=3 di golden set** (`npm run spearman`) kekecilan buat klaim akurasi statistik --
   cuma regression guard "urutan bener", bukan bukti "harness akurat". Perlu golden set
   lebih besar (10-20+ submission asli) sebelum klaim "harness valid" ke publik.
-- **`scripts/run_tournament.ts` belum pernah dites lawan GitHub beneran** -- logic-nya
-  udah direview, tapi WAJIB dicoba lawan 2-3 peserta dummy dulu sebelum dipercaya buat
-  50 peserta beneran (nama field API GitHub bisa aja beda dari asumsi kode).
-  **STATUS 2026-07-11**: masih belum dites (butuh `GH_TOKEN` + repo asli di tangan Ben).
+- **`scripts/run_tournament.ts` -- RESOLVED 2026-07-11**: dites beneran lawan GitHub Actions
+  (3 fixture dummy, brief 01-endless-runner). Dispatch/run-name-matching/polling/artifact-fetch/
+  leaderboard semua jalan benar. Nemu + fix 1 bug real di proses ini: `judge.yml` job `notify`
+  truncated mid-script (mojibake em-dash/emoji + node -e string gak pernah ditutup) --
+  konklusi run selalu `failure` walau `judge` job (scoring) sukses dan artifact score.json
+  valid. Fixed di commit `de01ebd`, reverifikasi: semua 3 run konklusi `success`. Belum dites
+  di skala 50 peserta beneran -- itu baru kejadian pas event pertama (lihat wave rollout).
 - **ELO belum dikalibrasi lawan data match asli** -- K-factor, draw margin, rank tier
   threshold semua "Neb pick" pertama, bukan hasil analisis data. Revisit setelah round 1.
 - **Submission repo public selama window** -- lihat keputusan di "Live event ops" di atas.
