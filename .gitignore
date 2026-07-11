@@ -9,3 +9,7 @@ out/
 assay-sample-good/
 assay-dummy-jelek/
 assay-dummy-curang/
+
+# secrets -- JANGAN PERNAH commit token/credential
+.env
+.env.*
