@@ -14,5 +14,5 @@
     { "name": "Emas",     "min_rating": 1150, "briefs": ["01-endless-runner", "02-platformer-gravity-flip", "03-memory-reshuffle"] },
     { "name": "Platina",  "min_rating": 1300, "briefs": ["01-endless-runner", "02-platformer-gravity-flip", "03-memory-reshuffle", "10-idle-clicker-prestige"] }
   ],
-  "_rank_tiers_note": "GATE INI DI BELAKANG VALIDASI BRIEF. Per README known-gaps: cuma brief 01 yang punya dummy validation (good/jelek/curang beneran jalan lewat harness). Brief 02/03/10 belum -- JANGAN aktifin tier Perak/Emas/Platina di event beneran sampai tests/dummy-02.unit.ts dkk (atau setara) lulus. min_rating threshold juga masih tebakan (belum ada distribusi rating asli buat nentuin percentile yang masuk akal) -- recalibrate setelah Season 0 round 1 selesai."
+  "_rank_tiers_note": "UPDATE 2026-07-11: gate 'brief 02/03/10 harus punya dummy validation lewat harness beneran (bukan jsdom)' SUDAH TERPENUHI -- npm run selftest:briefs 100% lulus (bug prestige seed:true di brief 10 ketemu + fix). Tier Perak/Emas/Platina boleh diaktifin. TAPI min_rating threshold (1050/1150/1300) MASIH tebakan awal ('Neb pick'), belum ada distribusi rating asli buat nentuin percentile yang masuk akal -- recalibrate setelah Season 0 round 1 ada data match beneran. Lihat README 'Rating (ELO)' + 'Known gaps'."
 }

@@ -129,4 +129,121 @@ yang bisa di-fix di level kode -- pilihannya proses:
   sebelum window mulai. Peserta gak bisa precompute/prebuild seed spesifik sebelum tau
   saltnya, walau mereka lomba bikin script tebak-tebakan.
 - **Window pendek**: makin pendek waktu antara "seed diumumin" dan "submission ditutup",
-  makin kecil peluang orang sempat browsing+niru repo orang lain secara efekt
+  makin kecil peluang orang sempat browsing+niru repo orang lain secara efektif.
+
+**KEPUTUSAN (2026-07-11, sebelum outreach ke peserta asing):** tetap **PUBLIC repo** buat
+Season 0 (event pertama). JANGAN blokir outreach demi bangun private-repo pipeline dulu.
+Alasan:
+- Risiko yang paling parah (2 peserta collision seed -> copy verbatim dijamin ke-cover
+  bagus) UDAH ditutup sesi ini (seed-space collision-free by construction).
+- Risiko yang TERSISA (peserta laen bisa liat *gaya/pendekatan* kode peserta laen selama
+  window, independen dari collision) itu risiko sosial/style, BUKAN hard-exploit yang
+  nembus scoring -- severity rendah buat event pertama dengan kohort kecil/dikenal
+  (komunitas Discord), beda kasus sama pendaftaran publik terbuka tanpa batas.
+- Fix yang bener (authenticated clone ke repo private) butuh job baru (`fetch` job pegang
+  `CLONE_PAT`, clone, upload artifact -> `judge` job turun dari artifact, ZERO secret,
+  biar gak balikin bug #1 [secret exfiltration] yang baru ditutup sesi ini) -- real dev
+  time yang sekarang gak available (budget waktu abis di Gate A hardening), bukan trivial
+  toggle "private" doang.
+- Mitigasi proses yang udah ada (salt rahasia + window pendek) cukup buat level risiko ini.
+
+**Wajib dilakuin sebelum kirim outreach:** cantumin eksplisit di ruleset/rules publik --
+"submission repo bersifat PUBLIC selama window kompetisi berlangsung, jangan anggap kode
+kalian confidential sampai window ditutup." Disclosure eksplisit, bukan silent risk.
+
+**Trigger buat revisit** (baru bangun private-repo pipeline kalau salah satu kejadian):
+(a) buka pendaftaran publik tanpa vetting/gak dikenal, (b) ada hadiah/stake reputasi yang
+bikin nyontek-gaya worth it, (c) ada 1 komplain nyata dari peserta soal ditiru. Desain
+fix-nya kalau saatnya tiba: job baru `fetch` (pegang `CLONE_PAT` secret, clone repo private
+peserta lewat token, upload hasil clone sebagai artifact) -> job `judge` (turun dari
+artifact, ZERO secret, jalanin `build_cmd` -- gak reintroduce bug #1) -> job `notify` (sama
+kayak sekarang). Peserta invite bot/service account sebagai read-only collaborator di repo
+private mereka sebelum submit.
+
+## GitHub Actions -- concurrency & minutes (cek sebelum trigger banyak run bareng)
+
+Per [docs resmi GitHub](https://docs.github.com/en/actions/reference/limits) (dicek
+2026-07-11):
+- **Free**: 20 concurrent job (standard GitHub-hosted runner), **account-wide** (semua
+  repo di akun itu gabung ke 1 kuota, bukan per-repo).
+- **Pro**: 40 concurrent job -- **$4/user/bulan**.
+- Job yang ngelewatin limit **di-queue otomatis** oleh GitHub, BUKAN gagal/cancel. Trigger
+  50 run bareng di Free tier itu AMAN secara korektnes -- cuma nambah wall-clock time
+  (batch berikutnya nunggu slot kosong).
+
+Hitungan kasar 50 peserta brief 01 di Free tier (asumsi ~2-4 menit/run: `npm ci` +
+`playwright install --with-deps chromium` + build + check): 50 run / 20 slot ~ 3 batch ->
+nambah kira-kira 2x waktu 1 run (~5-8 menit) ke total wall-clock dibanding paralel penuh.
+BUKAN blocker, cuma bikin leaderboard ngisi lebih lambat kalau komunitas nungguin live.
+
+**Rekomendasi:** upgrade ke GitHub Pro ($4/bulan, jauh di bawah hard-cap Season 0 <$50)
+SEBELUM hari-H kalau mau dobelin slot jadi 40 dan ngurangin friction pas ditonton
+komunitas -- **opsional**, bukan wajib buat korektnes hasil.
+
+**Optimasi belum dikerjain** (bukan blocker sekarang, tapi buang waktu tiap run): `judge.yml`
+gak nge-`actions/cache` `node_modules` atau Playwright browser binary -- tiap 1 dari 50 run
+bayar penuh cost `npm ci` + `playwright install --with-deps chromium` (~1-2 menit sendiri)
+dari nol tiap kali. Fix: tambah `actions/cache` step keyed di `package-lock.json` buat
+`node_modules` + `~/.cache/ms-playwright`. Belum urgent (2000 menit/bulan kuota Free masih
+jauh dari abis buat 50 run sekali event), tapi kepake begitu frequency event naik.
+
+## Rating (ELO) -- competitive track
+
+`src/elo/*` + `config/elo.json`. **Harness-only, NOL human judge** -- murni skor
+`judgeSubmission()` vs `judgeSubmission()`, bukan panel/human (itu konsep terpisah, buat
+track `final` di `weights.json`).
+
+- Rating awal: **1000** buat semua peserta baru.
+- K-factor by experience (`src/elo/rating.ts` + `k_tiers` di `config/elo.json`): **40**
+  (game 1-5, provisional), **24** (game 6-20, established), **12** (game 21+, veteran).
+- Expected score: formula standar chess-style `E = 1 / (1 + 10^((Rb-Ra)/400))`.
+- **Draw margin 3 poin**: selisih skor harness <= 3 dianggap draw, bukan win/loss --
+  nyerap noise (golden set validasi cuma n=3, lihat "Known gaps"), bukan sinyal skill
+  beneran beda.
+- **Invarian anti-cheat paling penting** (`src/elo/match.ts`): submission `ratable: false`
+  (flagged/build-fail) **OTOMATIS KALAH** lawan submission `ratable: true`, WALAU skor
+  numeriknya lebih tinggi. Diuji eksplisit di `tests/elo.unit.ts`, lulus. Kalau
+  KEDUANYA `ratable: false` -> `double_forfeit`, NOL perubahan rating (bukan draw normal),
+  tapi tetep kehitung 1 game buat progres K-tier.
+- Matchmaking (`src/elo/pairing.ts`): pasang by kedekatan rating, hindari rematch kalau
+  ada kandidat laen, 1 bye kalau jumlah peserta ganjil.
+- Rank tier (`tierFor()` di `src/elo/tiers.ts`): Perunggu (semua orang) -> Perak (1050+)
+  -> Emas (1150+) -> Platina (1300+), tiap tier ngebuka brief pool lebih luas (01 saja ->
+  01+02 -> 01+02+03 -> semua 4 brief).
+  **Update 2026-07-11**: `config/elo.json` nge-gate tier di atas Perunggu di belakang
+  "brief 02/03/10 punya dummy validation lewat harness beneran (bukan cuma jsdom)" --
+  syarat itu SEKARANG TERPENUHI (`npm run selftest:briefs` lulus 100%, lihat commit fix
+  brief 10). Gate boleh dibuka. **TAPI** `min_rating` threshold (1050/1150/1300) masih
+  tebakan awal ("Neb pick"), belum dikalibrasi lawan distribusi rating asli -- recalibrate
+  setelah Season 0 round 1 ada data match beneran.
+
+## Known gaps (JANGAN anggap ini "selesai" sampai poin di bawah diselesaikan/di-acknowledge)
+
+- **n=3 di golden set** (`npm run spearman`) kekecilan buat klaim akurasi statistik --
+  cuma regression guard "urutan bener", bukan bukti "harness akurat". Perlu golden set
+  lebih besar (10-20+ submission asli) sebelum klaim "harness valid" ke publik.
+- **`scripts/run_tournament.ts` belum pernah dites lawan GitHub beneran** -- logic-nya
+  udah direview, tapi WAJIB dicoba lawan 2-3 peserta dummy dulu sebelum dipercaya buat
+  50 peserta beneran (nama field API GitHub bisa aja beda dari asumsi kode).
+  **STATUS 2026-07-11**: masih belum dites (butuh `GH_TOKEN` + repo asli di tangan Ben).
+- **ELO belum dikalibrasi lawan data match asli** -- K-factor, draw margin, rank tier
+  threshold semua "Neb pick" pertama, bukan hasil analisis data. Revisit setelah round 1.
+- **Submission repo public selama window** -- lihat keputusan di "Live event ops" di atas.
+  Disclosure wajib ke peserta, bukan silent risk.
+- **Judge job gak nge-cache dependency/browser binary** -- lihat "GitHub Actions --
+  concurrency & minutes" di atas. Buang waktu, gak buang duit (masih dalam kuota free).
+- **Perf & a11y component di `weights.json` di-nol-in** (belum diimplementasi) --
+  `aggregate()` udah di-renormalize biar ini gak diam-diam nge-cap skor akhir (lihat Fix
+  2026-07-11 poin 3), tapi kalau nanti diimplementasi, tes ulang `tests/aggregate.unit.ts`.
+- **Brief 02/03/10 -- RESOLVED 2026-07-11**: sebelumnya cuma jsdom-verified (belum lewat
+  Playwright beneran). Ditemuin 1 bug nyata pas dites beneran: `briefs/10-idle-clicker-
+  prestige.ts` nge-tag check `prestige` sebagai `seed: true` padahal itu check fungsional
+  biasa (pakai `seed.costCurve` cuma sebagai parameter, bukan sinyal anti-prebuilt) --
+  bikin gate multiplicative (`spec_seed = nonSeedFrac * seedFrac`) di `cli.ts` collapse
+  salah: `jelek` (bug jujur) ke-flag `SEED_FAIL`/`ratable:false` padahal harusnya tetep
+  ratable, dan `curang` gak ke-flag `SEED_MISMATCH` yang seharusnya HARUS ke-flag, plus
+  `curang` dan `jelek` collision di skor yang sama (68=68), ngelanggar invarian
+  "curang < jelek". Fix: retag `prestige` jadi `seed: false` (konsisten sama pola brief
+  01/02/03 -- HANYA 1 check yang boleh `seed: true` per brief, yaitu check
+  "nilai seed hadir di visible text"). `npm run selftest:briefs` sekarang 100% lulus
+  (dites beneran lewat Playwright, bukan cuma jsdom). Brief 02/03/10 TERVALIDASI.
