@@ -1,0 +1,18 @@
+{
+  "_note": "Konfigurasi rating competitive track. Harness-only -- TIDAK ada human judge di sini (panel/human di weights.json itu buat track 'final', beda konsep, opsional/masa depan). Angka di sini 'Neb pick' pertama -- masuk akal buat start, TAPI belum dikalibrasi lawan data match beneran (belum ada 1 match pun jalan). Revisit setelah Season 0 ada data asli.",
+  "initial_rating": 1000,
+  "k_tiers": [
+    { "max_games": 5,  "k": 40, "label": "provisional (game 1-5) -- rating gerak cepat, belum stabil" },
+    { "max_games": 20, "k": 24, "label": "established (game 6-20)" },
+    { "max_games": null, "k": 12, "label": "veteran (game 21+) -- rating udah stabil, gerak pelan" }
+  ],
+  "draw_margin_points": 3,
+  "_draw_margin_note": "Selisih skor harness <= ini dianggap draw, bukan win/loss. Kenapa: harness known-noisy (lihat README known-gaps, golden set cuma n=3) -- selisih 1-2 poin BUKAN sinyal skill yang beda, itu noise. Draw margin nyerap noise itu biar ELO gak overreact ke selisih yang gak signifikan.",
+  "rank_tiers": [
+    { "name": "Perunggu", "min_rating": 0,    "briefs": ["01-endless-runner"] },
+    { "name": "Perak",    "min_rating": 1050, "briefs": ["01-endless-runner", "02-platformer-gravity-flip"] },
+    { "name": "Emas",     "min_rating": 1150, "briefs": ["01-endless-runner", "02-platformer-gravity-flip", "03-memory-reshuffle"] },
+    { "name": "Platina",  "min_rating": 1300, "briefs": ["01-endless-runner", "02-platformer-gravity-flip", "03-memory-reshuffle", "10-idle-clicker-prestige"] }
+  ],
+  "_rank_tiers_note": "GATE INI DI BELAKANG VALIDASI BRIEF. Per README known-gaps: cuma brief 01 yang punya dummy validation (good/jelek/curang beneran jalan lewat harness). Brief 02/03/10 belum -- JANGAN aktifin tier Perak/Emas/Platina di event beneran sampai tests/dummy-02.unit.ts dkk (atau setara) lulus. min_rating threshold juga masih tebakan (belum ada distribusi rating asli buat nentuin percentile yang masuk akal) -- recalibrate setelah Season 0 round 1 selesai."
+}

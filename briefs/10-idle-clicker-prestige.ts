@@ -32,7 +32,7 @@ const brief: Brief = {
                                    return after > before;
                        });
                        return { pass: ok, detail: `auto_generated=${ok}` }; } },
-      { id: "prestige", label: "Prestige math benar via window.__assay.forcePrestige(curve)", seed: true,
+      { id: "prestige", label: "Prestige math benar via window.__assay.forcePrestige(curve)", seed: false,
              run: async (p, seed) => {
                        const curve = Number(seed?.costCurve ?? 1.15);
                        const ok = await p.evaluate(async (curve) => {

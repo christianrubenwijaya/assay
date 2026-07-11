@@ -1,4 +1,8 @@
 name: ASSAY Judge
+# run-name bikin tiap run gampang dicocokin ke peserta lewat REST API (GET .../actions/runs,
+# filter by `name`) -- dipake scripts/run_tournament.ts buat matching run_id per peserta,
+# karena workflow_dispatch API sendiri gak balikin run_id pas trigger.
+run-name: judge-${{ inputs.participant }}
 on:
   workflow_dispatch:
     inputs:
@@ -9,8 +13,14 @@ on:
       division:    { description: "standard|open", required: true, default: "open" }
       track:       { description: "casual|competitive", required: true, default: "casual" }
 jobs:
+  # Job ini menjalankan build_cmd PESERTA (arbitrary command dari arena.json mereka).
+  # SENGAJA nol secret di job ini -- GitHub Actions job = VM terpisah, jadi ini bukan
+  # cuma env-strip di level proses (lihat src/util.ts shUntrusted), tapi isolasi penuh
+  # di level infra: proses peserta gak pernah share VM dengan job yang pegang secret.
   judge:
     runs-on: ubuntu-latest
+    outputs:
+      participant: ${{ inputs.participant }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -19,10 +29,7 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - name: Clone submission (public repo)
         run: git clone --depth 1 "${{ inputs.submission }}" _sub
-      - name: Judge
-        env:
-          LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
-          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+      - name: Judge (NO secrets in this job)
         run: >
           npm run judge --
           --submission _sub --participant "${{ inputs.participant }}"
@@ -30,3 +37,22 @@ jobs:
           --division "${{ inputs.division }}" --track "${{ inputs.track }}" --out out
       - uses: actions/upload-artifact@v4
         with: { name: "assay-result-${{ inputs.participant }}", path: out/ }
+
+  # Job terpisah, jalan SETELAH judge selesai -- satu-satunya yang pegang DISCORD_WEBHOOK.
+  # Cuma baca score.json yang sudah jadi (data, bukan code), gak pernah eksekusi apapun
+  # dari repo peserta.
+  notify:
+    needs: judge
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with: { name: "assay-result-${{ inputs.participant }}", path: out }
+      - name: Post to Discord
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        run: |
+          node -e '
+            const fs = require("fs");
+            const r = JSON.parse(fs.readFileSync("out/${{ inputs.participant }}/score.json", "utf8"));
+            const line = `**${r.participant}** — ${r.brief_id} — **${r.score}/100**${r.ratable ? "" : " 🚫NOT-RATABLE"} ${r.flags.length ? "⚠️ " + r.flags.join(",") : "✅"}`;
+            if (!process.env.DISCORD_WEBHOOK) { console.log("[discord:stub]", line); process.

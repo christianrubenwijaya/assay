@@ -1,0 +1,7 @@
+{
+  "brief_id": "10-idle-clicker-prestige",
+  "division": "open",
+  "build_cmd": "node -e \"process.exit(0)\"",
+  "dist_dir": "dist",
+  "toolchain": [{ "name": "vanilla-js" }]
+}

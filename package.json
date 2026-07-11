@@ -8,7 +8,14 @@
     "judge": "tsx src/cli.ts",
     "precheck": "tsx src/precheck/index.ts",
     "selftest": "tsx tests/selftest.ts",
-    "test:unit": "tsx tests/aggregate.unit.ts"
+    "test:unit": "tsx tests/aggregate.unit.ts && tsx tests/spearman.unit.ts && tsx tests/seed.unit.ts && tsx tests/elo.unit.ts",
+    "spearman": "tsx tests/spearman.validate.ts",
+    "assign-seeds": "tsx src/seed/cli.ts",
+    "tournament": "tsx scripts/run_tournament.ts",
+    "elo-round": "tsx scripts/run_elo_round.ts",
+    "elo-apply": "tsx scripts/apply_round_results.ts",
+    "verify-fixtures-jsdom": "node scripts/verify_fixtures_jsdom.mjs",
+    "selftest:briefs": "tsx tests/dummy-briefs.local.ts"
   },
   "dependencies": {
     "zod": "^3.23.8"

@@ -1,0 +1,24 @@
+<!doctype html><html><head><meta charset="utf-8"></head><body>
+<div id="count">0</div>
+<!-- prebuilt generic -- resource name gak diganti sesuai seed (harusnya "kopi sachet") -->
+<p>Resource: Koin</p>
+<script>
+(function () {
+  var count = 0, prestigeCount = 0;
+  var countEl = document.getElementById("count");
+  function render() { countEl.textContent = String(count); }
+  window.__assay = {
+    start: function () {},
+    click: function () { count += 1; render(); },
+    tick: function (n) { count += (n || 1); render(); },
+    forcePrestige: function (curve) {
+      prestigeCount++;
+      count = 0;
+      render();
+    },
+    getPrestigeCount: function () { return prestigeCount; }
+  };
+  render();
+})();
+</script>
+</body></html>

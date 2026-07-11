@@ -1,0 +1,147 @@
+{
+  "_note": "Seed SPACE per brief -- bukan daftar seed statis. src/seed/derive.ts turunin 1 seed unik per (participant_id, brief_id, salt) dari sini secara deterministik (hash-based), bukan pilih dari array kecil. Ini gantiin config/seed_pool.json lama (6/5/4/4 entri -- collision pasti kejadian kalau peserta > pool size, lihat README). seed_pool.json TETAP ada, dipakai buat contoh manual/dev lokal doang -- JANGAN dipakai buat assignment beneran pas live event.",
+  "01-endless-runner": {
+    "template": "theme",
+    "nouns": [
+      "teko",
+      "kucing",
+      "durian",
+      "ojek",
+      "hantu",
+      "roket",
+      "kambing",
+      "printer",
+      "sendal",
+      "gerobak",
+      "capung",
+      "tukang bakso",
+      "satpam",
+      "kipas angin",
+      "termos",
+      "sapu",
+      "motor bebek",
+      "angkot",
+      "kelinci",
+      "cumi",
+      "gajah",
+      "burung hantu",
+      "vespa",
+      "panci",
+      "gerbong",
+      "layang-layang",
+      "kompor",
+      "warung",
+      "becak",
+      "monyet"
+    ],
+    "modifiers": [
+      "terbang",
+      "meledak",
+      "ninja",
+      "kantor",
+      "ketupat",
+      "raksasa",
+      "gaib",
+      "viral",
+      "error",
+      "nyasar",
+      "ngambek",
+      "kesurupan",
+      "bocor",
+      "overheat",
+      "misterius",
+      "malas",
+      "hoki",
+      "apes",
+      "supersonik",
+      "gratisan"
+    ],
+    "join": "{noun} {modifier}"
+  },
+  "02-platformer-gravity-flip": {
+    "n_range": [
+      6,
+      16
+    ],
+    "protagonists": [
+      "batu ajaib",
+      "kucing luar angkasa",
+      "robot sarung",
+      "naga kertas",
+      "ksatria mie",
+      "peri warteg",
+      "tikus ronin",
+      "kepiting cyborg",
+      "burung origami",
+      "siput turbo",
+      "tokek ninja",
+      "boneka voodoo",
+      "semut raksasa",
+      "ikan terbang",
+      "kadal astronot"
+    ],
+    "palettes": [
+      "neon",
+      "pastel",
+      "monokrom",
+      "sunset",
+      "cyberpunk",
+      "vaporwave",
+      "grayscale",
+      "earth-tone",
+      "retro-8bit",
+      "pastel-gelap"
+    ]
+  },
+  "03-memory-reshuffle": {
+    "x_range": [
+      3,
+      7
+    ],
+    "pairs_range": [
+      4,
+      10
+    ],
+    "themes": [
+      "buah tropis",
+      "hewan nusantara",
+      "jajanan pasar",
+      "rasi bintang",
+      "alat dapur",
+      "kendaraan tua",
+      "bumbu dapur",
+      "ikan hias",
+      "bunga lokal",
+      "kue tradisional"
+    ]
+  },
+  "10-idle-clicker-prestige": {
+    "cost_curve_range": [
+      1.05,
+      1.55
+    ],
+    "cost_curve_step": 0.05,
+    "resource_names": [
+      "kopi sachet",
+      "kerupuk",
+      "token listrik",
+      "bensin eceran",
+      "pulsa",
+      "gorengan",
+      "es batu",
+      "kartu perdana",
+      "tisu",
+      "sabun colek",
+      "lilin",
+      "korek api",
+      "gas melon",
+      "galon",
+      "baterai ABC",
+      "masker",
+      "hand sanitizer",
+      "kantong plastik",
+      "tusuk sate",
+      "garam dapur"
+    ]
+  }
+}

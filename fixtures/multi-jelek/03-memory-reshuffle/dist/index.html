@@ -1,0 +1,32 @@
+<!doctype html><html><head><meta charset="utf-8"></head><body>
+<div class="card" data-card>1</div>
+<div class="card" data-card>2</div>
+<div class="card" data-card>3</div>
+<div class="card" data-card>4</div>
+<div class="card" data-card>5</div>
+<div class="card" data-card>6</div>
+<p>Tema: buah tropis</p>
+<div id="win" style="display:none">MENANG!</div>
+<script>
+(function () {
+  var SEED_X = 4;
+  var matchedCount = 0;
+  var flipsSinceReshuffle = 0;
+  var reshuffleCount = 0;
+  window.__assay = {
+    start: function () {},
+    // BUG: forceMatch dipanggil (dites di UI internal peserta), tapi lupa nambahin
+    // matchedCount -- state match logic-nya nyimpen di variable lain yang gak konek.
+    // Bug fungsional beneran, bukan cheat -- reshuffle & tema tetep bener.
+    forceMatch: function () { /* lupa matchedCount++ */ },
+    getMatchedCount: function () { return matchedCount; },
+    flipCard: function (i) {
+      flipsSinceReshuffle++;
+      if (flipsSinceReshuffle > SEED_X) { reshuffleCount++; flipsSinceReshuffle = 0; }
+    },
+    getReshuffleCount: function () { return reshuffleCount; },
+    forceWin: function () { document.getElementById("win").style.display = "block"; }
+  };
+})();
+</script>
+</body></html>

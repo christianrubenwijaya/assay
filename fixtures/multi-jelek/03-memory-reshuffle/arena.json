@@ -1,0 +1,7 @@
+{
+  "brief_id": "03-memory-reshuffle",
+  "division": "open",
+  "build_cmd": "node -e \"process.exit(0)\"",
+  "dist_dir": "dist",
+  "toolchain": [{ "name": "vanilla-js" }]
+}

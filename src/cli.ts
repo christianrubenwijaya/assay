@@ -27,6 +27,7 @@ export async function judgeSubmission(o: JudgeOpts): Promise<JudgeResult> {
   const base: JudgeResult = {
     participant: o.participant, brief_id: o.briefId, division: o.division, track: o.track,
     score: 0, components: {}, checks: [], flags, build_ok: false, smoke_ok: false, load_ms: 0,
+    ratable: true,
   };
 
   // isolate: copy submission to a clean work dir (cross-platform, no shelling to Unix cp/rm/mkdir)
@@ -37,18 +38,18 @@ export async function judgeSubmission(o: JudgeOpts): Promise<JudgeResult> {
 
   // GATE: timestamp (skipped local — needs GitHub API in CI)
   if (o.t0 && o.repoCreatedAt && new Date(o.repoCreatedAt) < new Date(o.t0)) {
-    flags.push("TIMESTAMP_FAIL"); base.flags = flags; writeReport(join(o.outDir, o.participant), base); return base;
+    flags.push("TIMESTAMP_FAIL"); base.ratable = false; writeReport(join(o.outDir, o.participant), base); return base;
   }
 
   // GATE: manifest
   const man = readManifest(work);
-  if (!man.ok) { flags.push("MANIFEST_FAIL:" + man.error); writeReport(join(o.outDir, o.participant), base); await postDiscord(process.env.DISCORD_WEBHOOK, base); return base; }
+  if (!man.ok) { flags.push("MANIFEST_FAIL:" + man.error); base.ratable = false; writeReport(join(o.outDir, o.participant), base); await postDiscord(process.env.DISCORD_WEBHOOK, base); return base; }
   const m = man.manifest!;
 
   // GATE: build
   const b = buildSubmission(work, m);
   base.build_ok = b.ok;
-  if (!b.ok) { flags.push("BUILD_FAIL"); const agg = aggregate({ build: 0 }, weights.harness_components, o.track, weights.tracks); base.score = agg.score; base.components = agg.components; writeReport(join(o.outDir, o.participant), base); await postDiscord(process.env.DISCORD_WEBHOOK, base); return base; }
+  if (!b.ok) { flags.push("BUILD_FAIL"); base.ratable = false; const agg = aggregate({ build: 0 }, weights.harness_components, o.track, weights.tracks); base.score = agg.score; base.components = agg.components; writeReport(join(o.outDir, o.participant), base); await postDiscord(process.env.DISCORD_WEBHOOK, base); return base; }
 
   // serve + browser
   const srv = await startServer(b.distPath);
@@ -66,13 +67,25 @@ export async function judgeSubmission(o: JudgeOpts): Promise<JudgeResult> {
   } finally { await browser.close(); srv.close(); }
   base.checks = checks;
 
-  const specPass = checks.filter(c => c.pass).length / (checks.length || 1);
-  const agg = aggregate({ build: 1, smoke: smokeOk ? 1 : 0, spec_seed: specPass }, weights.harness_components, o.track, weights.tracks);
+  // spec_seed = GATE, bukan rata-rata biasa. Seed check adalah satu-satunya sinyal
+  // anti-prebuilt yang low-variance (Bible §6) -- kalau dirata-rata sama bobot dengan
+  // check fungsional lain (mis. 1 dari 8 check), gagal seed cuma nyenggol skor
+  // beberapa persen. Itu bug: submission prebuilt-dengan-seed-salah (curang) bisa
+  // ke-skor LEBIH TINGGI dari submission jujur yang punya bug fungsional beneran
+  // (jelek) -- rating jadi favor nyontek drpd usaha jujur. Fix: kalikan, bukan rata-rata.
+  // nonSeedFrac * seedFrac -- seed gagal total (0) -> component collapse ke 0,
+  // proporsional kalau brief punya >1 seed-check di masa depan.
+  const nonSeed = checks.filter(c => !c.seed), seed = checks.filter(c => c.seed);
+  const nonSeedFrac = nonSeed.length ? nonSeed.filter(c => c.pass).length / nonSeed.length : 1;
+  const seedFrac = seed.length ? seed.filter(c => c.pass).length / seed.length : 1;
+  const specSeedComponent = nonSeedFrac * seedFrac;
+
+  const agg = aggregate({ build: 1, smoke: smokeOk ? 1 : 0, spec_seed: specSeedComponent }, weights.harness_components, o.track, weights.tracks);
   base.score = agg.score; base.components = agg.components;
 
   // prebuilt signature: semua non-seed lolos tapi seed gagal
-  const nonSeed = checks.filter(c => !c.seed), seed = checks.filter(c => c.seed);
-  if (seed.length && seed.every(c => !c.pass) && nonSeed.length && nonSeed.every(c => c.pass)) flags.push("SEED_MISMATCH(prebuilt?)");
+  if (seed.length && seedFrac === 0 && nonSeed.length && nonSeedFrac === 1) flags.push("SEED_MISMATCH(prebuilt?)");
+  if (seedFrac < 1 && seed.length) { flags.push("SEED_FAIL"); base.ratable = false; }
 
   writeReport(join(o.outDir, o.participant), base);
   await postDiscord(process.env.DISCORD_WEBHOOK, base);
@@ -86,5 +99,5 @@ if (import.meta.url === pathToFileURL(process.argv[1]).href) {
     submissionDir: a.submission, participant: a.participant || "sub", briefId: a.brief,
     seed: a.seed ? JSON.parse(a.seed) : {}, division: a.division || "open", track: a.track || "casual",
     outDir: a.out || join(ROOT, "out"), t0: a.t0, repoCreatedAt: a.repoCreatedAt,
-  }).then(r => { log(`${r.participant}: ${r.score}/100 flags=[${r.flags.join(",")}]`); process.exit(0); });
+  }).then(r => { log(`${r.participant}: ${r.score}/100 ratable=${r.ratable} flags=[${r.flags.join(",")}]`); process.exit(0); });
 }

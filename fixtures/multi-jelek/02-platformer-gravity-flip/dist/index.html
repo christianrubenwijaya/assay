@@ -1,0 +1,22 @@
+<!doctype html><html><head><meta charset="utf-8"></head><body>
+<canvas id="game" width="320" height="240"></canvas>
+<p>Protagonis: batu ajaib</p>
+<div id="win" style="display:none">MENANG!</div>
+<script>
+(function () {
+  document.body.setAttribute("data-gravity", "down");
+  window.__assay = {
+    start: function () {},
+    // BUG: fungsi ada, dipanggil, tapi lupa update attribute data-gravity di body --
+    // ini bug fungsional beneran (peserta pikir udah kepasang, ternyata gak nge-fire),
+    // BUKAN cheat/prebuilt -- protagonis dari seed tetep bener di visible text.
+    triggerFlip: function () {
+      var noop = true;
+    },
+    forceWin: function () {
+      document.getElementById("win").style.display = "block";
+    }
+  };
+})();
+</script>
+</body></html>
