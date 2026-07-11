@@ -13,10 +13,6 @@ on:
       division:    { description: "standard|open", required: true, default: "open" }
       track:       { description: "casual|competitive", required: true, default: "casual" }
 jobs:
-  # Job ini menjalankan build_cmd PESERTA (arbitrary command dari arena.json mereka).
-  # SENGAJA nol secret di job ini -- GitHub Actions job = VM terpisah, jadi ini bukan
-  # cuma env-strip di level proses (lihat src/util.ts shUntrusted), tapi isolasi penuh
-  # di level infra: proses peserta gak pernah share VM dengan job yang pegang secret.
   judge:
     runs-on: ubuntu-latest
     outputs:
@@ -38,9 +34,6 @@ jobs:
       - uses: actions/upload-artifact@v4
         with: { name: "assay-result-${{ inputs.participant }}", path: out/ }
 
-  # Job terpisah, jalan SETELAH judge selesai -- satu-satunya yang pegang DISCORD_WEBHOOK.
-  # Cuma baca score.json yang sudah jadi (data, bukan code), gak pernah eksekusi apapun
-  # dari repo peserta.
   notify:
     needs: judge
     runs-on: ubuntu-latest
@@ -54,5 +47,11 @@ jobs:
           node -e '
             const fs = require("fs");
             const r = JSON.parse(fs.readFileSync("out/${{ inputs.participant }}/score.json", "utf8"));
-            const line = `**${r.participant}** — ${r.brief_id} — **${r.score}/100**${r.ratable ? "" : " 🚫NOT-RATABLE"} ${r.flags.length ? "⚠️ " + r.flags.join(",") : "✅"}`;
-            if (!process.env.DISCORD_WEBHOOK) { console.log("[discord:stub]", line); process.
+            const line = `**${r.participant}** ? ${r.brief_id} ? **${r.score}/100**${r.ratable ? "" : " 🚫NOT-RATABLE"} ${r.flags.length ? "?? " + r.flags.join(",") : "?"}`;
+            if (!process.env.DISCORD_WEBHOOK) { console.log("[discord:stub]", line); process.exit(0); }
+            fetch(process.env.DISCORD_WEBHOOK, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ content: line }),
+            }).then(res => { if (!res.ok) { console.error("discord post failed", res.status); process.exit(1); } });
+          '
